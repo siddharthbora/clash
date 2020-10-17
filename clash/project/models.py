@@ -22,6 +22,7 @@ class Response(models.Model):
     score = models.IntegerField(default=0)
 
 
+
     def __str__(self):
         return self.user.first_name+f' ({self.selected_answer})'
 
@@ -33,11 +34,16 @@ class Register(models.Model):  # extended user model
     language = models.CharField(max_length=15)
     total_score = models.IntegerField(default=0)
     quelist = models.TextField(max_length=255, default="[]")
-    bool = models.BooleanField(default=True)
+    marks = models.IntegerField(default=0)
     status = models.BooleanField(default=True)
     logouttime = models.TimeField(blank=True, null=True)
     extra_time=models.IntegerField(default=0)
     time_rem=models.IntegerField(default=1680)
+    queflist=models.TextField(max_length=255, default="[]")
+    spin_wheel=models.BooleanField(default=False)
+    checkpoint=models.IntegerField(default=0)
+    flags=models.IntegerField(default=-1)
+
 
     def __str__(self):
         return self.user.first_name+f' ({self.user.username})'

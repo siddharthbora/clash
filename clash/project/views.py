@@ -11,7 +11,7 @@ import re
 import random
 import datetime
 from django.utils import timezone
-from django.views.decorators.cache import cache_control
+#from django.views.decorators.cache import cache_control
 
 app_name = 'project'
 number_of_questions = 12
@@ -74,6 +74,7 @@ def signup(request):
                 lst.append(questionNo)
             newuser.cq = lst[-1]
             newuser.quelist = json.dumps(lst)
+            newuser.queflist = json.dumps(lst)
             auth.login(request, ouruser)
             newuser.save()
             return HttpResponseRedirect(reverse('success'))
@@ -122,32 +123,97 @@ def success(request):
             return redirect('logout')
         msg2 = "TIME REMAINING  = " + str(minutes) + ":" + str(seconds)
         lst = json.loads(getuser.quelist)
+        flst=json.loads(getuser.queflist)
         if request.method == 'GET' and getuser.user.is_authenticated:
             pass
+        if getuser.total_score%getuser.checkpoint==0:
+            if getuser.flag==0:
+                msg3="congrats u won chance to reattempt a question"
+                quenumber=request.POST['quenum']
+                lst.append(flst[quenumber-1])
+                getuser.flag=-1
+                getuser.marks=6
+                getuser.save()
+            elif getuser.flag==1:
+                msg3="Unlucky! -5 from ur total"
+                getuser.total_score-=5
+                getuser.flag = -1
+                getuser.save()
+            elif getuser.flag == 2:
+                msg3 = "congrats ur time is freezed for current question"
+            elif getuser.flag == 3:
+                msg3 = "Unlucky! -8 + 4 for next 3 questions"
+                getuser.marks=3
+                getuser.flag = -1
+                getuser.save()
+            elif getuser.flag == 4:
+                msg3 = "congrats you have no negative marks for next 3 questions"
+                getuser.marks=4
+                getuser.flag = -1
+                getuser.save()
+            elif getuser.flag == 5:
+                msg3 = "Unlucky! u cannot spin here after"
+                getuser.checkpoint=-1
+                getuser.flag = -1
+                getuser.save()
+            elif getuser.flag == 6:
+                msg3 = "congrats you have +16-10 marking scmeme fpr current question"
+                getuser.marks = 5
+                getuser.flag = -1
+                getuser.save()
+
         if request.method == 'POST':
             if request.POST.get('submit') == str(lst[-1]):
                 user_input = request.POST['user_ans']
                 pre_question = Questions.objects.get(pk=lst[-1])
-                if getuser.bool == True:
+                if getuser.marks == 1:
                     if pre_question.correct_answer == user_input:
                         score = 4
-                        bool = True
+                        marks=1
                     else:
                         score = -2
-                        bool = False
-                else:
+                        marks=2
+                elif getuser.marks==2:
                     if pre_question.correct_answer == user_input:
                         score = 2
-                        bool = True
+                        marks = 1
                     else:
                         score = -1
-                        bool = False
+                        marks = 2
+                elif getuser.marks==3:
+                    if pre_question.correct_answer == user_input:
+                        score = +4
+                        marks = 1
+                    else:
+                        score = -8
+                        marks = 2
+                elif getuser.marks == 4:
+                    if pre_question.correct_answer == user_input:
+                        score = +4
+                        marks = 1
+                    else:
+                        score = 0
+                        marks = 2
+                elif getuser.marks == 5:
+                    if pre_question.correct_answer == user_input:
+                        score = +16
+                        marks = 1
+                    else:
+                        score = -10
+                        marks = 2
+                elif getuser.marks == 6:
+                    if pre_question.correct_answer == user_input:
+                        score = +5
+                        marks = 1
+                    else:
+                        score = -5
+                        marks = 2
 
                 respo = Response(question=pre_question, user=getuser.user, selected_answer=user_input, score=score)
                 respo.save()
                 getuser.total_score += respo.score
                 lst.pop()
-                getuser.bool = bool
+                getuser.marks = marks
                 getuser.save()
 
         if len(lst) == 0:
