@@ -126,40 +126,47 @@ def success(request):
         flst=json.loads(getuser.queflist)
         if request.method == 'GET' and getuser.user.is_authenticated:
             pass
-        if getuser.total_score%getuser.checkpoint==0:
+        if getuser.total_score%getuser.checkpoint==0 & getuser.spin_wheel==True:
             if getuser.flag==0:
                 msg3="congrats u won chance to reattempt a question"
                 quenumber=request.POST['quenum']
                 lst.append(flst[quenumber-1])
                 getuser.flag=-1
                 getuser.marks=6
+                getuser.spin_wheel=False
                 getuser.save()
             elif getuser.flag==1:
                 msg3="Unlucky! -5 from ur total"
                 getuser.total_score-=5
                 getuser.flag = -1
+                getuser.spin_wheel=False
                 getuser.save()
             elif getuser.flag == 2:
                 msg3 = "congrats ur time is freezed for current question"
+                getuser.spin_wheel = False
             elif getuser.flag == 3:
                 msg3 = "Unlucky! -8 + 4 for next 3 questions"
                 getuser.marks=3
                 getuser.flag = -1
+                getuser.spin_wheel = False
                 getuser.save()
             elif getuser.flag == 4:
                 msg3 = "congrats you have no negative marks for next 3 questions"
                 getuser.marks=4
                 getuser.flag = -1
+                getuser.spin_wheel = False
                 getuser.save()
             elif getuser.flag == 5:
                 msg3 = "Unlucky! u cannot spin here after"
                 getuser.checkpoint=-1
                 getuser.flag = -1
+                getuser.spin_wheel = False
                 getuser.save()
             elif getuser.flag == 6:
                 msg3 = "congrats you have +16-10 marking scmeme fpr current question"
                 getuser.marks = 5
                 getuser.flag = -1
+                getuser.spin_wheel = False
                 getuser.save()
 
         if request.method == 'POST':
@@ -221,7 +228,7 @@ def success(request):
         question = Questions.objects.get(pk=lst[-1])
         getuser.quelist = json.dumps(lst)
         getuser.save()
-        return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2]})
+        return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2],'msg': [msg3]})
     except:
         return render(request, 'task2part2temp/signin.html', {'msg': ['Login First ..!!']})
     return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2]})
