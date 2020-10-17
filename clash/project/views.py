@@ -16,6 +16,14 @@ from django.utils import timezone
 app_name = 'project'
 number_of_questions = 12
 
+def checkspin(request):
+    flag=request.GET.get('flag')
+    getuser = Register.objects.get(user=request.user)
+    getuser.flag = int(flag)
+    getuser.spin_wheel=True
+    getuser.save()
+    print(flag)
+
 
 def check(request):
     username_lst = []
@@ -66,6 +74,15 @@ def signup(request):
             newuser.status = False
             newuser.save()
             lst = []
+            if newuser.level=='fe':
+                cp=random.randint(5,7)
+                newuser.checkpoint=cp
+            elif newuser.level=='se':
+                cp=random.randint(7,10)
+                newuser.checkpoint=cp
+            else:
+                cp=random.randint(9,12)
+                newuser.checkpoint=cp
             for i in range(0, 10):
                 while True:
                     questionNo = random.randint(1, 12)
@@ -169,6 +186,7 @@ def success(request):
                 getuser.flag = -1
                 getuser.spin_wheel = False
                 getuser.save()
+
 
         if request.method == 'POST':
             if request.POST.get('submit') == str(lst[-1]):

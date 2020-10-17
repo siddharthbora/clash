@@ -10,4 +10,5 @@ urlpatterns = [
     path('result/', views.success, name='result'),
     path('getrequest/',views.check,name='check'),
     path('emglogin/',views.emglogin,name='emglogin'),
+    path('spincheck/',views.checkspin, name='spincheck')
 ]

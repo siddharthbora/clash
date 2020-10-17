@@ -34,7 +34,7 @@ class Register(models.Model):  # extended user model
     language = models.CharField(max_length=15)
     total_score = models.IntegerField(default=0)
     quelist = models.TextField(max_length=255, default="[]")
-    marks = models.IntegerField(default=0)
+    marks = models.IntegerField(default=1)
     status = models.BooleanField(default=True)
     logouttime = models.TimeField(blank=True, null=True)
     extra_time=models.IntegerField(default=0)
