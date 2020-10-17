@@ -129,7 +129,7 @@ def success(request):
         if getuser.total_score%getuser.checkpoint==0 & getuser.spin_wheel==True:
             if getuser.flag==0:
                 msg3="congrats u won chance to reattempt a question"
-                quenumber=request.POST['quenum']
+                quenumber=request.POST['quenum'] #take question number!
                 lst.append(flst[quenumber-1])
                 getuser.flag=-1
                 getuser.marks=6
@@ -143,6 +143,7 @@ def success(request):
                 getuser.save()
             elif getuser.flag == 2:
                 msg3 = "congrats ur time is freezed for current question"
+                getuser.time_rem +=time_diff
                 getuser.spin_wheel = False
             elif getuser.flag == 3:
                 msg3 = "Unlucky! -8 + 4 for next 3 questions"
