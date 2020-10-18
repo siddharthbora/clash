@@ -11,18 +11,32 @@ import re
 import random
 import datetime
 from django.utils import timezone
+from collections import Counter
 #from django.views.decorators.cache import cache_control
 
 app_name = 'project'
 number_of_questions = 12
 
+
 def checkspin(request):
     flag=request.GET.get('flag')
     getuser = Register.objects.get(user=request.user)
     getuser.flag = int(flag)
+    if int(flag)==2:
+        getuser.freezetimestart=timezone.now()
     getuser.spin_wheel=True
     getuser.save()
+    life=["congrats u won chance to reattempt a question",
+          "Unlucky! -5 from ur total",
+          "congrats ur time is freezed for current question" ,
+          "Unlucky! -8 + 4 for next 3 questions",
+          "congrats you have no negative marks for next 3 questions",
+          "Unlucky! u cannot spin here after",
+          "congrats you have +16-10 marking scmeme fpr current question"]
+    data={'flag':int(flag)}
     print(flag)
+    return JsonResponse(data)
+
 
 
 def check(request):
@@ -70,28 +84,26 @@ def signup(request):
                                                password=password)
             newuser = Register(user=ouruser, phone=phone, level=level, language=language)
             ouruser.save()
-            newuser.save()
             newuser.status = False
             newuser.save()
             lst = []
             if newuser.level=='fe':
-                cp=random.randint(5,7)
+                cp=random.randint(5,8)
                 newuser.checkpoint=cp
             elif newuser.level=='se':
-                cp=random.randint(7,10)
+                cp=random.randint(7,11)
                 newuser.checkpoint=cp
             else:
-                cp=random.randint(9,12)
+                cp=random.randint(9,13)
                 newuser.checkpoint=cp
             for i in range(0, 10):
                 while True:
-                    questionNo = random.randint(1, 12)
+                    questionNo = random.randint(1, number_of_questions)
                     if questionNo not in lst:
                         break
                 lst.append(questionNo)
-            newuser.cq = lst[-1]
             newuser.quelist = json.dumps(lst)
-            newuser.queflist = json.dumps(lst)
+            #newuser.queflist = json.dumps(lst)
             auth.login(request, ouruser)
             newuser.save()
             return HttpResponseRedirect(reverse('success'))
@@ -123,9 +135,17 @@ def signin(request):
     return render(request, 'task2part2temp/signin.html')
 
 
+def recfun(getuser):
+    getuser.flag = -1
+    getuser.spin_wheel = False
+    getuser.save()
+
+
 # @cache_control(no_cache=True,must_revalidate=True,no_store=True)
+
 def success(request):
     try:
+        msg3=""
         getuser = Register.objects.get(user=request.user)
         time_diff = timezone.now() - request.user.last_login
         minute=(getuser.time_rem//60)+(getuser.extra_time//60)
@@ -143,52 +163,49 @@ def success(request):
         flst=json.loads(getuser.queflist)
         if request.method == 'GET' and getuser.user.is_authenticated:
             pass
-        if getuser.total_score%getuser.checkpoint==0 & getuser.spin_wheel==True:
-            if getuser.flag==0:
-                msg3="congrats u won chance to reattempt a question"
-                quenumber=request.POST['quenum'] #take question number!
-                lst.append(flst[quenumber-1])
-                getuser.flag=-1
-                getuser.marks=6
-                getuser.spin_wheel=False
-                getuser.save()
-            elif getuser.flag==1:
-                msg3="Unlucky! -5 from ur total"
-                getuser.total_score-=5
-                getuser.flag = -1
-                getuser.spin_wheel=False
-                getuser.save()
-            elif getuser.flag == 2:
-                msg3 = "congrats ur time is freezed for current question"
-                getuser.time_rem +=time_diff
-                getuser.spin_wheel = False
-            elif getuser.flag == 3:
-                msg3 = "Unlucky! -8 + 4 for next 3 questions"
-                getuser.marks=3
-                getuser.flag = -1
-                getuser.spin_wheel = False
-                getuser.save()
-            elif getuser.flag == 4:
-                msg3 = "congrats you have no negative marks for next 3 questions"
-                getuser.marks=4
-                getuser.flag = -1
-                getuser.spin_wheel = False
-                getuser.save()
-            elif getuser.flag == 5:
-                msg3 = "Unlucky! u cannot spin here after"
-                getuser.checkpoint=-1
-                getuser.flag = -1
-                getuser.spin_wheel = False
-                getuser.save()
-            elif getuser.flag == 6:
-                msg3 = "congrats you have +16-10 marking scmeme fpr current question"
-                getuser.marks = 5
-                getuser.flag = -1
-                getuser.spin_wheel = False
-                getuser.save()
+        if (getuser.total_score%getuser.checkpoint==0) and getuser.spin_wheel==True:
+            a = dict(Counter(flst))
+            allow=True
+            for i in range(len(a)):
+                if a[i]>1:
+                    allow=False
+            if allow:
+                if getuser.flag==0 and request.method=='POST':
+                    msg3="congrats u won chance to reattempt a question"
+                    quenumber=request.POST['quenum']                #take question number!
+                    lst.append(flst[quenumber-1])
+                    getuser.marks=6
+                    recfun(getuser)
+                    question = Questions.objects.get(pk=flst[quenumber-1])
+                    return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2]})
+                elif getuser.flag==1:
+                    msg3="Unlucky! -5 from ur total"
+                    getuser.total_score-=5
+                    recfun(getuser)
+                elif getuser.flag == 2:
+                    msg3 = "congrats ur time is freezed for current question"
+                    sec=timezone.now()-getuser.freezetimestart
+                    getuser.time_rem +=sec.total_seconds()
+                    getuser.spin_wheel = False
+                elif getuser.flag == 3:
+                    msg3 = "Unlucky! -8 + 4 for next 3 questions"
+                    getuser.marks=3
+                    recfun(getuser)
+                elif getuser.flag == 4:
+                    msg3 = "congrats you have no negative marks for next 3 questions"
+                    getuser.marks=4
+                    recfun(getuser)
+                elif getuser.flag == 5:
+                    msg3 = "Unlucky! u cannot spin here after"
+                    getuser.checkpoint=-1
+                    recfun(getuser)
+                elif getuser.flag == 6:
+                    msg3 = "congrats you have +16-10 marking scmeme fpr current question"
+                    getuser.marks = 5
+                    recfun(getuser)
 
 
-        if request.method == 'POST':
+        if request.method == 'POST' and getuser.flag!=0:
             if request.POST.get('submit') == str(lst[-1]):
                 user_input = request.POST['user_ans']
                 pre_question = Questions.objects.get(pk=lst[-1])
@@ -238,6 +255,7 @@ def success(request):
                 respo = Response(question=pre_question, user=getuser.user, selected_answer=user_input, score=score)
                 respo.save()
                 getuser.total_score += respo.score
+                flst.append(lst[-1])
                 lst.pop()
                 getuser.marks = marks
                 getuser.save()
@@ -246,10 +264,11 @@ def success(request):
             return HttpResponseRedirect(reverse('logout'))
         question = Questions.objects.get(pk=lst[-1])
         getuser.quelist = json.dumps(lst)
+        getuser.queflist-json.dumps(flst)
         getuser.save()
-        return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2],'msg': [msg3]})
-    except:
-        return render(request, 'task2part2temp/signin.html', {'msg': ['Login First ..!!']})
+        return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2]})
+    except Exception as e:
+        return render(request, 'task2part2temp/signin.html', {'msg': [f'Login First ..!! {e}']})
     return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2]})
 # @cache_control(no_cache=True,must_revalidate=True,no_store=True)
 

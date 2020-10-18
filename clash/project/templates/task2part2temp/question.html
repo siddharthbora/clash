@@ -152,14 +152,39 @@
                         'flag': indicatedSegment.text
                     },
                     success: function(data) {
-                        let name=data.lifeline
-                        $('#lifeline').html(<h3>name</h3>);
+                        let name=data.lifeline;
+                        if(data.flag==0)
+                        {
+                            $('#lifeline').html("<h3>congrats u won chance to reattempt a question</h3>");
+                        }
+                        else if(data.flag==1)
+                        {
+                            $('#lifeline').html("<h3>Unlucky! -5 from ur total</h3>");
+                        }
+                        else if(data.flag==2)
+                        {
+                            $('#lifeline').html("<h3>congrats ur time is freezed for current question</h3>");
+                        }
+                        else if(data.flag==3)
+                        {
+                            $('#lifeline').html("<h3>Unlucky! -8 + 4 for next 3 questions</h3>");
+                        }
+                        else if(data.flag==4)
+                        {
+                            $('#lifeline').html("<h3>congrats you have no negative marks for next 3 questions</h3>");
+                        }
+                        else if(data.flag==5)
+                        {
+                            $('#lifeline').html("<h3>Unlucky! u cannot spin here after</h3>");
+                        }
+                        else if(data.flag==6)
+                        {
+                            $('#lifeline').html("<h3>congrats you have +16-10 marking scmeme fpr current question</h3>");
+                        }
                     }
                 });
             }
         </script>
-
 </body>
 
 </html>
-

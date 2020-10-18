@@ -42,7 +42,8 @@ class Register(models.Model):  # extended user model
     queflist=models.TextField(max_length=255, default="[]")
     spin_wheel=models.BooleanField(default=False)
     checkpoint=models.IntegerField(default=0)
-    flags=models.IntegerField(default=-1)
+    flag=models.IntegerField(default=-1)
+    freezetimestart=models.TimeField(blank=True,null=True)
 
 
     def __str__(self):
