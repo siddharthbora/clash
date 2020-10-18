@@ -48,7 +48,7 @@
     {{question.question}}
 </div>
 <div class="ansblock" style="margin: 50px;">
-    <form class="" action="" method="post">
+    <form class="" action="{% url 'success' %}" method="post">
         {% csrf_token %}
         <input type="radio" id={{question.option_A}} name="user_ans" value={{question.option_A}} required>
         <label for={{question.option_A}} >{{question.option_A}}</label><br><br>
@@ -69,12 +69,18 @@
 {% for msg in msg %}
 <h2>{{msg}}</h2>
 {% endfor %}
+        <form action="{% url 'success' %}" method="post">
+        <input type="text" name="quenum" id="reattempt"><br>
+        <input type="submit" value="Go to question" id="attempt_button">
+        </form>
         <div class="wheel">
            <canvas id="canvas" width="434" height="434" style="border:1px solid #000000";></canvas>
         </div>
         <img id="prizePointer" src="{% static '/images/basic_pointer.png' %}">
         <div id="lifeline"></div>
+        <input type="submit" value="Enable checkbox" id="enable_reattempt">
         <input type="submit" value="Spin the Wheel" id="spin_button" onClick="startSpin();">
+
         <script>
             // Create new wheel object specifying the parameters at creation time.
             let Wheel = new Winwheel({
@@ -102,6 +108,10 @@
             });
 
             let wheelSpinning = false;
+            let total_score= {{user.total_score}}
+            let cp={{user.checkpoint}}
+            document.getElementById('spin_button').disabled = true;
+            checkpoint();
             // -------------------------------------------------------
             // Click handler for spin button.
             // -------------------------------------------------------
@@ -124,6 +134,15 @@
                 }
             }
 
+            function checkpoint(){
+                if(total_score%cp===0 && total_score!=0){
+                    document.getElementById('spin_button').disabled = false;
+                }
+                else if(cp===-1){
+                    document.getElementById('spin_button').disabled = true;
+                }
+            }
+
             // -------------------------------------------------------
             // Function for reset button.
             // -------------------------------------------------------
@@ -142,8 +161,15 @@
             // note the indicated segment is passed in as a parameter as 99% of the time you will want to know this to inform the user of their prize.
             // -------------------------------------------------------
 
+
+            $('input#reattempt').hide();
+            $('input#attempt_button').hide();
+
+            $('input#enable_reattempt').hide();
+
             function alertPrize(indicatedSegment)
             {
+
                 $.ajax({
                     method: 'GET',
                     url: 'http://127.0.0.1:8000/spincheck/',
@@ -155,6 +181,11 @@
                         let name=data.lifeline;
                         if(data.flag==0)
                         {
+                            $('input#enable_reattempt').show();
+                            $('input#enable_reattempt').click(function(){
+                                $('#reattempt').show();
+                                $('input#attempt_button').show();
+                            });
                             $('#lifeline').html("<h3>congrats u won chance to reattempt a question</h3>");
                         }
                         else if(data.flag==1)

@@ -264,7 +264,7 @@ def success(request):
             return HttpResponseRedirect(reverse('logout'))
         question = Questions.objects.get(pk=lst[-1])
         getuser.quelist = json.dumps(lst)
-        getuser.queflist-json.dumps(flst)
+        getuser.queflist=json.dumps(flst)
         getuser.save()
         return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2]})
     except Exception as e:
