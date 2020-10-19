@@ -44,7 +44,7 @@ class Register(models.Model):  # extended user model
     checkpoint=models.IntegerField(default=0)
     flag=models.IntegerField(default=-1)
     freezetimestart=models.TimeField(blank=True,null=True)
-
+    flashblind = models.IntegerField(default=0)
 
     def __str__(self):
         return self.user.first_name+f' ({self.user.username})'

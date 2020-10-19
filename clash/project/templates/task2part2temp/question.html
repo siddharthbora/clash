@@ -65,11 +65,12 @@
         <button type="submit" name = 'submit' value={{question.id}}  style="margin: 10px;">submit</button>
     </form>
 </div>
-<h1>Your score is: {{user.total_score}}</h1>
+<h1>Your score is: {{user.total_score}} <h2>Your checkpoint is {{user.checkpoint }}</h2></h1>
 {% for msg in msg %}
 <h2>{{msg}}</h2>
 {% endfor %}
         <form action="{% url 'success' %}" method="post">
+            {% csrf_token %}
         <input type="text" name="quenum" id="reattempt"><br>
         <input type="submit" value="Go to question" id="attempt_button">
         </form>
