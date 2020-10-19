@@ -21,18 +21,20 @@ number_of_questions = 12
 def checkspin(request):
     flag=request.GET.get('flag')
     getuser = Register.objects.get(user=request.user)
-    getuser.flag = int(flag)
+    getuser.spincount-=1
+    getuser.flag = 2
+    flag=2
     if int(flag)==2:
         getuser.freezetimestart=timezone.now()
     getuser.spin_wheel=True
     getuser.save()
-    life=["congrats u won chance to reattempt a question",
+    '''life=["congrats u won chance to reattempt a question",
           "Unlucky! -5 from ur total",
           "congrats ur time is freezed for current question" ,
           "Unlucky! -8 + 4 for next 3 questions",
           "congrats you have no negative marks for next 3 questions",
           "Unlucky! u cannot spin here after",
-          "congrats you have +16-10 marking scmeme fpr current question"]
+          "congrats you have +16-10 marking scmeme fpr current question"]'''
     data={'flag':int(flag)}
     print(flag)
     return JsonResponse(data)
@@ -47,7 +49,6 @@ def check(request):
     data = {'is_taken': False}
     if request.GET.get('name') in username_lst:
         data = {'is_taken': True}
-
     return JsonResponse(data)
 
 
@@ -66,7 +67,7 @@ def signup(request):
         level = data['level']
         language = data['language']
         regexusername = "^[[A-Z]|[a-z]][[A-Z]|[a-z]|\\d|[_]]{7,29}$"
-        regexemail = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+        regexemail = "^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$"
         if not re.search(regexusername, username):
             return render(request, 'task2part2temp/signup.html', {'msg': ["Username is Not Valid"]})
         if not re.search(regexemail, email):
@@ -88,13 +89,13 @@ def signup(request):
             newuser.save()
             lst = []
             if newuser.level=='fe':
-                cp=random.randint(5,8)
+                cp=random.randint(5,7)
                 newuser.checkpoint=cp
             elif newuser.level=='se':
-                cp=random.randint(7,11)
+                cp=random.randint(8,10)
                 newuser.checkpoint=cp
             else:
-                cp=random.randint(9,13)
+                cp=random.randint(9,12)
                 newuser.checkpoint=cp
             for i in range(0, 10):
                 while True:
@@ -103,11 +104,10 @@ def signup(request):
                         break
                 lst.append(questionNo)
             newuser.quelist = json.dumps(lst)
-            #newuser.queflist = json.dumps(lst)
+            newuser.quefulllist = json.dumps(lst)
             auth.login(request, ouruser)
             newuser.save()
             return HttpResponseRedirect(reverse('success'))
-            # return HttpResponse("creartedpython manage")
         except:
             return render(request, 'task2part2temp/signup.html', {'msg': ["User already exists"]})
     return render(request, 'task2part2temp/signup.html')
@@ -140,20 +140,20 @@ def recfun(getuser):
     getuser.spin_wheel = False
     getuser.save()
 
-
 # @cache_control(no_cache=True,must_revalidate=True,no_store=True)
 
 def success(request):
     try:
         msg3=""
         getuser = Register.objects.get(user=request.user)
-        time_diff = timezone.now() - request.user.last_login
-        minute=(getuser.time_rem//60)+(getuser.extra_time//60)
-        second=(getuser.time_rem%60)+(getuser.extra_time%60)
-        time_rem = datetime.timedelta(minutes=minute,seconds=second) - time_diff
+        time_diff = timezone.now() - getuser.user.last_login
+        minute=getuser.extra_time//60
+        second=getuser.extra_time%60
+        time_rem = datetime.timedelta(minutes=28+minute,seconds=second) - time_diff
         total_seconds = time_rem.total_seconds()
-        getuser.time_rem=total_seconds-(getuser.extra_time)
+        getuser.time_rem = int(total_seconds)
         getuser.save()
+        time=[getuser.time_rem // 60,getuser.time_rem%60]
         minutes = int((total_seconds % 3600) // 60)
         seconds = int(total_seconds % 60)
         if total_seconds <= 0:
@@ -164,29 +164,24 @@ def success(request):
         if request.method == 'GET' and getuser.user.is_authenticated:
             pass
         if (getuser.total_score%getuser.checkpoint==0) and getuser.spin_wheel==True:
-            #a = dict(Counter(flst))
-            allow=True
-            #for i in range(len(a)):
-            #    if a[i]>1:
-            #        allow=False
+            allow=False
+            if getuser.spincount>=0:
+                allow=True
             if allow:
                 if getuser.flag==0 and request.method=='POST':
                     msg3="congrats u won chance to reattempt a question"
                     quenumber=request.POST['quenum']                #take question number!
-                    lst.append(flst[int(quenumber)-1])
-                    getuser.marks=6
+                    lst.append(flst[int(quenumber)-1])              #152
+                    getuser.marks=6                                 #43
                     recfun(getuser)
-                    question = Questions.objects.get(pk=flst[int(quenumber)-1])
-                    return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2]})
                 elif getuser.flag==1:
                     msg3="Unlucky! -5 from ur total"
                     getuser.total_score-=5
                     recfun(getuser)
                 elif getuser.flag == 2:
                     msg3 = "congrats ur time is freezed for current question"
-                    #sec=timezone.now()-getuser.freezetimestart
-                    #getuser.time_rem +=sec.total_seconds()
-                    time_rem+=time_diff
+                    sec=timezone.now()-getuser.freezetimestart
+                    getuser.extra_time +=sec.total_seconds()
                     recfun(getuser)
                 elif getuser.flag == 3:
                     msg3 = "Unlucky! -8 + 4 for next 3 questions"
@@ -283,10 +278,10 @@ def success(request):
         getuser.quelist = json.dumps(lst)
         getuser.queflist=json.dumps(flst)
         getuser.save()
-        return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2]})
+        return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'timemin': [time[0]],'timesec':[time[1]]})
     except Exception as e:
         return render(request, 'task2part2temp/signin.html', {'msg': [f'Login First ..!! {e}']})
-    return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2]})
+    #return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'timemin': [time[0]],'timesec':[time[1]]})
 # @cache_control(no_cache=True,must_revalidate=True,no_store=True)
 
 
@@ -318,7 +313,7 @@ def emglogin(request):
                 if len(json.loads(setuser.quelist))==1:
                     return render(request, 'task2part2temp/emglogin.html', {'msg': ['The Player has Completed All Question..!!']})
                 setuser.status = True
-                setuser.extra_time = extra_time
+                setuser.extra_time += extra_time
                 setuser.save()
                 return render(request, 'task2part2temp/emglogin.html', {'msg': ['Time added successfully!']})
             return render(request, 'task2part2temp/emglogin.html', {'msg': ['Invalid Credentials!']})

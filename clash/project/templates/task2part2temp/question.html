@@ -40,9 +40,12 @@
 
 
 <p>
-    {% for t in time %}
-<h2>{{t}}</h2>
-{% endfor %}
+    {%for min in timemin%}
+    {%for sec in timesec%}
+        <h2>Time Remaining is {{min}}:{{sec}}</h2>
+    {% endfor%}
+{% endfor%}
+<h2>new time {{user.time_rem}}</h2>
 </p>
 <div class="queblock">
     {{question.question}}
@@ -65,7 +68,14 @@
         <button type="submit" name = 'submit' value={{question.id}}  style="margin: 10px;">submit</button>
     </form>
 </div>
-<h1>Your score is: {{user.total_score}} <h2>Your checkpoint is {{user.checkpoint }}</h2></h1>
+<h1>Your score is: {{user.total_score}}</h1>
+{% ifequal -1 user.checkpoint%}
+    {% ifequal 1 user.spincount %}
+        <h2>You have no Spins here after</h2>
+    {%endifequal%}
+{% else %}
+    <h2>Your checkpoint is {{user.checkpoint}}</h2>
+{%endifequal%}
 {% for msg in msg %}
 <h2>{{msg}}</h2>
 {% endfor %}
@@ -139,7 +149,7 @@
                 if(total_score%cp===0 && total_score!=0){
                     document.getElementById('spin_button').disabled = false;
                 }
-                else if(cp===-1){
+                if(cp===-1){
                     document.getElementById('spin_button').disabled = true;
                 }
             }
@@ -211,7 +221,7 @@
                         }
                         else if(data.flag==6)
                         {
-                            $('#lifeline').html("<h3>congrats you have +16-10 marking scmeme fpr current question</h3>");
+                            $('#lifeline').html("<h3>congrats you have +16-10 marking scmeme for current question</h3>");
                         }
                     }
                 });
