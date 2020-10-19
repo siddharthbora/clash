@@ -165,7 +165,7 @@
             $('input#reattempt').hide();
             $('input#attempt_button').hide();
 
-            $('input#enable_reattempt').hide();
+            $('input#enable_reattempt').prop("disabled", true);
 
             function alertPrize(indicatedSegment)
             {
@@ -181,7 +181,7 @@
                         let name=data.lifeline;
                         if(data.flag==0)
                         {
-                            $('input#enable_reattempt').show();
+                            $('input#enable_reattempt').prop("disabled", false);
                             $('input#enable_reattempt').click(function(){
                                 $('#reattempt').show();
                                 $('input#attempt_button').show();
