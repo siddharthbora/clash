@@ -8,7 +8,11 @@ body
 .wheel{
      position: relative;
 }
-
+#lifeline{
+    margin-left: 200px;
+    margin-right: 200px;
+    padding: 10px;
+}
 #canvas{
     background-position: center;
     background-repeat: none;

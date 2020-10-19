@@ -40,10 +40,13 @@ class Register(models.Model):  # extended user model
     extra_time=models.IntegerField(default=0)
     time_rem=models.IntegerField(default=1680)
     queflist=models.TextField(max_length=255, default="[]")
+    quefulllist = models.TextField(max_length=255, default="[]")
     spin_wheel=models.BooleanField(default=False)
     checkpoint=models.IntegerField(default=0)
-    flags=models.IntegerField(default=-1)
-
+    flag=models.IntegerField(default=-1)
+    freezetimestart=models.DateTimeField(blank=True,null=True)
+    flashblind = models.IntegerField(default=0)
+    spincount=models.IntegerField(default=2)
 
     def __str__(self):
         return self.user.first_name+f' ({self.user.username})'

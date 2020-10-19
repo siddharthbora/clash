@@ -40,15 +40,18 @@
 
 
 <p>
-    {% for t in time %}
-<h2>{{t}}</h2>
-{% endfor %}
+    {%for min in timemin%}
+    {%for sec in timesec%}
+        <h2>Time Remaining is {{min}}:{{sec}}</h2>
+    {% endfor%}
+{% endfor%}
+<h2>new time {{user.time_rem}}</h2>
 </p>
 <div class="queblock">
     {{question.question}}
 </div>
 <div class="ansblock" style="margin: 50px;">
-    <form class="" action="" method="post">
+    <form class="" action="{% url 'success' %}" method="post">
         {% csrf_token %}
         <input type="radio" id={{question.option_A}} name="user_ans" value={{question.option_A}} required>
         <label for={{question.option_A}} >{{question.option_A}}</label><br><br>
@@ -66,15 +69,29 @@
     </form>
 </div>
 <h1>Your score is: {{user.total_score}}</h1>
+{% ifequal -1 user.checkpoint%}
+    {% ifequal 1 user.spincount %}
+        <h2>You have no Spins here after</h2>
+    {%endifequal%}
+{% else %}
+    <h2>Your checkpoint is {{user.checkpoint}}</h2>
+{%endifequal%}
 {% for msg in msg %}
 <h2>{{msg}}</h2>
 {% endfor %}
+        <form action="{% url 'success' %}" method="post">
+            {% csrf_token %}
+        <input type="text" name="quenum" id="reattempt"><br>
+        <input type="submit" value="Go to question" id="attempt_button">
+        </form>
         <div class="wheel">
            <canvas id="canvas" width="434" height="434" style="border:1px solid #000000";></canvas>
         </div>
         <img id="prizePointer" src="{% static '/images/basic_pointer.png' %}">
         <div id="lifeline"></div>
+        <input type="submit" value="Enable checkbox" id="enable_reattempt">
         <input type="submit" value="Spin the Wheel" id="spin_button" onClick="startSpin();">
+
         <script>
             // Create new wheel object specifying the parameters at creation time.
             let Wheel = new Winwheel({
@@ -102,6 +119,10 @@
             });
 
             let wheelSpinning = false;
+            let total_score= {{user.total_score}}
+            let cp={{user.checkpoint}}
+            document.getElementById('spin_button').disabled = true;
+            checkpoint();
             // -------------------------------------------------------
             // Click handler for spin button.
             // -------------------------------------------------------
@@ -124,6 +145,15 @@
                 }
             }
 
+            function checkpoint(){
+                if(total_score%cp===0 && total_score!=0){
+                    document.getElementById('spin_button').disabled = false;
+                }
+                if(cp===-1){
+                    document.getElementById('spin_button').disabled = true;
+                }
+            }
+
             // -------------------------------------------------------
             // Function for reset button.
             // -------------------------------------------------------
@@ -142,8 +172,15 @@
             // note the indicated segment is passed in as a parameter as 99% of the time you will want to know this to inform the user of their prize.
             // -------------------------------------------------------
 
+
+            $('input#reattempt').hide();
+            $('input#attempt_button').hide();
+
+            $('input#enable_reattempt').prop("disabled", true);
+
             function alertPrize(indicatedSegment)
             {
+
                 $.ajax({
                     method: 'GET',
                     url: 'http://127.0.0.1:8000/spincheck/',
@@ -152,14 +189,44 @@
                         'flag': indicatedSegment.text
                     },
                     success: function(data) {
-                        let name=data.lifeline
-                        $('#lifeline').html(<h3>name</h3>);
+                        let name=data.lifeline;
+                        if(data.flag==0)
+                        {
+                            $('input#enable_reattempt').prop("disabled", false);
+                            $('input#enable_reattempt').click(function(){
+                                $('#reattempt').show();
+                                $('input#attempt_button').show();
+                            });
+                            $('#lifeline').html("<h3>congrats u won chance to reattempt a question</h3>");
+                        }
+                        else if(data.flag==1)
+                        {
+                            $('#lifeline').html("<h3>Unlucky! -5 from ur total</h3>");
+                        }
+                        else if(data.flag==2)
+                        {
+                            $('#lifeline').html("<h3>congrats ur time is freezed for current question</h3>");
+                        }
+                        else if(data.flag==3)
+                        {
+                            $('#lifeline').html("<h3>Unlucky! -8 + 4 for next 3 questions</h3>");
+                        }
+                        else if(data.flag==4)
+                        {
+                            $('#lifeline').html("<h3>congrats you have no negative marks for next 3 questions</h3>");
+                        }
+                        else if(data.flag==5)
+                        {
+                            $('#lifeline').html("<h3>Unlucky! u cannot spin here after</h3>");
+                        }
+                        else if(data.flag==6)
+                        {
+                            $('#lifeline').html("<h3>congrats you have +16-10 marking scmeme for current question</h3>");
+                        }
                     }
                 });
             }
         </script>
-
 </body>
 
 </html>
-

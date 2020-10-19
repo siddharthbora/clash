@@ -11,18 +11,34 @@ import re
 import random
 import datetime
 from django.utils import timezone
+from collections import Counter
 #from django.views.decorators.cache import cache_control
 
 app_name = 'project'
 number_of_questions = 12
 
+
 def checkspin(request):
     flag=request.GET.get('flag')
     getuser = Register.objects.get(user=request.user)
-    getuser.flag = int(flag)
+    getuser.spincount-=1
+    getuser.flag = 2
+    flag=2
+    if int(flag)==2:
+        getuser.freezetimestart=timezone.now()
     getuser.spin_wheel=True
     getuser.save()
+    '''life=["congrats u won chance to reattempt a question",
+          "Unlucky! -5 from ur total",
+          "congrats ur time is freezed for current question" ,
+          "Unlucky! -8 + 4 for next 3 questions",
+          "congrats you have no negative marks for next 3 questions",
+          "Unlucky! u cannot spin here after",
+          "congrats you have +16-10 marking scmeme fpr current question"]'''
+    data={'flag':int(flag)}
     print(flag)
+    return JsonResponse(data)
+
 
 
 def check(request):
@@ -33,7 +49,6 @@ def check(request):
     data = {'is_taken': False}
     if request.GET.get('name') in username_lst:
         data = {'is_taken': True}
-
     return JsonResponse(data)
 
 
@@ -52,7 +67,7 @@ def signup(request):
         level = data['level']
         language = data['language']
         regexusername = "^[[A-Z]|[a-z]][[A-Z]|[a-z]|\\d|[_]]{7,29}$"
-        regexemail = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+        regexemail = "^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$"
         if not re.search(regexusername, username):
             return render(request, 'task2part2temp/signup.html', {'msg': ["Username is Not Valid"]})
         if not re.search(regexemail, email):
@@ -70,7 +85,6 @@ def signup(request):
                                                password=password)
             newuser = Register(user=ouruser, phone=phone, level=level, language=language)
             ouruser.save()
-            newuser.save()
             newuser.status = False
             newuser.save()
             lst = []
@@ -78,24 +92,22 @@ def signup(request):
                 cp=random.randint(5,7)
                 newuser.checkpoint=cp
             elif newuser.level=='se':
-                cp=random.randint(7,10)
+                cp=random.randint(8,10)
                 newuser.checkpoint=cp
             else:
                 cp=random.randint(9,12)
                 newuser.checkpoint=cp
             for i in range(0, 10):
                 while True:
-                    questionNo = random.randint(1, 12)
+                    questionNo = random.randint(1, number_of_questions)
                     if questionNo not in lst:
                         break
                 lst.append(questionNo)
-            newuser.cq = lst[-1]
             newuser.quelist = json.dumps(lst)
-            newuser.queflist = json.dumps(lst)
+            newuser.quefulllist = json.dumps(lst)
             auth.login(request, ouruser)
             newuser.save()
             return HttpResponseRedirect(reverse('success'))
-            # return HttpResponse("creartedpython manage")
         except:
             return render(request, 'task2part2temp/signup.html', {'msg': ["User already exists"]})
     return render(request, 'task2part2temp/signup.html')
@@ -123,17 +135,25 @@ def signin(request):
     return render(request, 'task2part2temp/signin.html')
 
 
+def recfun(getuser):
+    getuser.flag = -1
+    getuser.spin_wheel = False
+    getuser.save()
+
 # @cache_control(no_cache=True,must_revalidate=True,no_store=True)
+
 def success(request):
     try:
+        msg3=""
         getuser = Register.objects.get(user=request.user)
-        time_diff = timezone.now() - request.user.last_login
-        minute=(getuser.time_rem//60)+(getuser.extra_time//60)
-        second=(getuser.time_rem%60)+(getuser.extra_time%60)
-        time_rem = datetime.timedelta(minutes=minute,seconds=second) - time_diff
+        time_diff = timezone.now() - getuser.user.last_login
+        minute=getuser.extra_time//60
+        second=getuser.extra_time%60
+        time_rem = datetime.timedelta(minutes=28+minute,seconds=second) - time_diff
         total_seconds = time_rem.total_seconds()
-        getuser.time_rem=total_seconds-(getuser.extra_time)
+        getuser.time_rem = int(total_seconds)
         getuser.save()
+        time=[getuser.time_rem // 60,getuser.time_rem%60]
         minutes = int((total_seconds % 3600) // 60)
         seconds = int(total_seconds % 60)
         if total_seconds <= 0:
@@ -143,114 +163,125 @@ def success(request):
         flst=json.loads(getuser.queflist)
         if request.method == 'GET' and getuser.user.is_authenticated:
             pass
-        if getuser.total_score%getuser.checkpoint==0 & getuser.spin_wheel==True:
-            if getuser.flag==0:
-                msg3="congrats u won chance to reattempt a question"
-                quenumber=request.POST['quenum'] #take question number!
-                lst.append(flst[quenumber-1])
-                getuser.flag=-1
-                getuser.marks=6
-                getuser.spin_wheel=False
-                getuser.save()
-            elif getuser.flag==1:
-                msg3="Unlucky! -5 from ur total"
-                getuser.total_score-=5
-                getuser.flag = -1
-                getuser.spin_wheel=False
-                getuser.save()
-            elif getuser.flag == 2:
-                msg3 = "congrats ur time is freezed for current question"
-                getuser.time_rem +=time_diff
-                getuser.spin_wheel = False
-            elif getuser.flag == 3:
-                msg3 = "Unlucky! -8 + 4 for next 3 questions"
-                getuser.marks=3
-                getuser.flag = -1
-                getuser.spin_wheel = False
-                getuser.save()
-            elif getuser.flag == 4:
-                msg3 = "congrats you have no negative marks for next 3 questions"
-                getuser.marks=4
-                getuser.flag = -1
-                getuser.spin_wheel = False
-                getuser.save()
-            elif getuser.flag == 5:
-                msg3 = "Unlucky! u cannot spin here after"
-                getuser.checkpoint=-1
-                getuser.flag = -1
-                getuser.spin_wheel = False
-                getuser.save()
-            elif getuser.flag == 6:
-                msg3 = "congrats you have +16-10 marking scmeme fpr current question"
-                getuser.marks = 5
-                getuser.flag = -1
-                getuser.spin_wheel = False
-                getuser.save()
+        if (getuser.total_score%getuser.checkpoint==0) and getuser.spin_wheel==True:
+            allow=False
+            if getuser.spincount>=0:
+                allow=True
+            if allow:
+                if getuser.flag==0 and request.method=='POST':
+                    msg3="congrats u won chance to reattempt a question"
+                    quenumber=request.POST['quenum']                #take question number!
+                    lst.append(flst[int(quenumber)-1])              #152
+                    getuser.marks=6                                 #43
+                    recfun(getuser)
+                elif getuser.flag==1:
+                    msg3="Unlucky! -5 from ur total"
+                    getuser.total_score-=5
+                    recfun(getuser)
+                elif getuser.flag == 2:
+                    msg3 = "congrats ur time is freezed for current question"
+                    sec=timezone.now()-getuser.freezetimestart
+                    getuser.extra_time +=sec.total_seconds()
+                    recfun(getuser)
+                elif getuser.flag == 3:
+                    msg3 = "Unlucky! -8 + 4 for next 3 questions"
+                    getuser.marks=3
+                    getuser.flashblind=2
+                    recfun(getuser)
+                elif getuser.flag == 4:
+                    msg3 = "congrats you have no negative marks for next 3 questions"
+                    getuser.marks=4
+                    getuser.flashblind=2
+                    recfun(getuser)
+                elif getuser.flag == 5:
+                    msg3 = "Unlucky! u cannot spin here after"
+                    getuser.checkpoint=-1
+                    recfun(getuser)
+                elif getuser.flag == 6:
+                    msg3 = "congrats you have +16-10 marking scmeme fpr current question"
+                    getuser.marks = 5
+                    recfun(getuser)
 
-
-        if request.method == 'POST':
+        if request.method == 'POST' and getuser.flag!=0:
             if request.POST.get('submit') == str(lst[-1]):
                 user_input = request.POST['user_ans']
                 pre_question = Questions.objects.get(pk=lst[-1])
                 if getuser.marks == 1:
                     if pre_question.correct_answer == user_input:
                         score = 4
-                        marks=1
+                        getuser.marks=1
                     else:
                         score = -2
-                        marks=2
+                        getuser.marks=2
                 elif getuser.marks==2:
                     if pre_question.correct_answer == user_input:
                         score = 2
-                        marks = 1
+                        getuser.marks = 1
                     else:
                         score = -1
-                        marks = 2
+                        getuser.marks = 2
                 elif getuser.marks==3:
                     if pre_question.correct_answer == user_input:
                         score = +4
-                        marks = 1
+                        if getuser.flashblind>0:
+                            getuser.flashblind-=1
+                            getuser.marks=3
+                        else:
+                            getuser.marks=1
                     else:
                         score = -8
-                        marks = 2
+                        if getuser.flashblind>0:
+                            getuser.flashblind-=1
+                            getuser.marks=3
+                        else:
+                            getuser.marks = 2
                 elif getuser.marks == 4:
                     if pre_question.correct_answer == user_input:
                         score = +4
-                        marks = 1
+                        if getuser.flashblind>0:
+                            getuser.flashblind-=1
+                            getuser.marks=4
+                        else:
+                            getuser.marks=1
                     else:
                         score = 0
-                        marks = 2
+                        if getuser.flashblind>0:
+                            getuser.flashblind-=1
+                            getuser.marks=4
+                        else:
+                            getuser.marks = 2
                 elif getuser.marks == 5:
                     if pre_question.correct_answer == user_input:
                         score = +16
-                        marks = 1
+                        getuser.marks = 1
                     else:
                         score = -10
-                        marks = 2
+                        getuser.marks = 2
                 elif getuser.marks == 6:
                     if pre_question.correct_answer == user_input:
                         score = +5
-                        marks = 1
+                        getuser.marks = 1
                     else:
                         score = -5
-                        marks = 2
+                        getuser.marks = 2
 
                 respo = Response(question=pre_question, user=getuser.user, selected_answer=user_input, score=score)
                 respo.save()
                 getuser.total_score += respo.score
+                flst.append(lst[-1])
                 lst.pop()
-                getuser.marks = marks
                 getuser.save()
 
         if len(lst) == 0:
             return HttpResponseRedirect(reverse('logout'))
         question = Questions.objects.get(pk=lst[-1])
         getuser.quelist = json.dumps(lst)
+        getuser.queflist=json.dumps(flst)
         getuser.save()
-        return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2],'msg': [msg3]})
-    except:
-        return render(request, 'task2part2temp/signin.html', {'msg': ['Login First ..!!']})
-    return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'time': [msg2]})
+        return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'timemin': [time[0]],'timesec':[time[1]]})
+    except Exception as e:
+        return render(request, 'task2part2temp/signin.html', {'msg': [f'Login First ..!! {e}']})
+    #return render(request, 'task2part2temp/question.html', {'user': getuser, 'question': question, 'timemin': [time[0]],'timesec':[time[1]]})
 # @cache_control(no_cache=True,must_revalidate=True,no_store=True)
 
 
@@ -282,7 +313,7 @@ def emglogin(request):
                 if len(json.loads(setuser.quelist))==1:
                     return render(request, 'task2part2temp/emglogin.html', {'msg': ['The Player has Completed All Question..!!']})
                 setuser.status = True
-                setuser.extra_time = extra_time
+                setuser.extra_time += extra_time
                 setuser.save()
                 return render(request, 'task2part2temp/emglogin.html', {'msg': ['Time added successfully!']})
             return render(request, 'task2part2temp/emglogin.html', {'msg': ['Invalid Credentials!']})
