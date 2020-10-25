@@ -55,9 +55,9 @@
 <a href="{% url 'signin' %}">Already Signed Up? Signin from here</a>
 <script>
         $(document).ready(function() {
+            $('input#search').keyup(function() {
+            let name = $('#search').val();
             setTimeout(function(){
-                $('input#search').keyup(function() {
-                let name = $('#search').val();
                 $.ajax({
                     method: 'GET',
                     url: 'getrequest/',
@@ -77,6 +77,7 @@
                         }
                     }
                 });
+            }, 2000);
             });
             $('input#confpass').keyup(function(){
 				let pass = $('#pass').val();
@@ -90,7 +91,6 @@
                      $('#submit').prop("disabled", true);
 				}
 			});
-            }, 3000);
         });
     </script>
 {% endblock %}

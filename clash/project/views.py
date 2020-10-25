@@ -22,8 +22,8 @@ def checkspin(request):
     flag=request.GET.get('flag')
     getuser = Register.objects.get(user=request.user)
     getuser.spincount-=1
-    getuser.flag = int(flag)
-    flag=int(flag)
+    getuser.flag = 3
+    flag=3
     if int(flag)==2 and getuser.freezetimestart==None:
         getuser.freezetimestart=timezone.now()
     getuser.spin_wheel=True
@@ -36,7 +36,7 @@ def checkspin(request):
           "Unlucky! u cannot spin here after",
           "congrats you have +16-10 marking scmeme fpr current question"]'''
     data={'flag':int(flag),'useflag':getuser.flag,'flashblind':getuser.flashblind}
-    print(flag)
+    # print(flag)
     return JsonResponse(data)
 
 
@@ -209,7 +209,7 @@ def success(request):
             pre_question = Questions.objects.get(pk=lst[-1])
             user_input1 = request.POST['attempt1']
             user_input2 = request.POST['attempt2']
-            print(user_input1, user_input2)
+            # print(user_input1, user_input2)
             getuser.freezebar=False
             if pre_question.correct_answer == user_input1:
                 if pre_question.correct_answer == user_input1:

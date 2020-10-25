@@ -193,14 +193,21 @@
                 }
             }
             get_it_assured();
-            function checkbutton()
-            {if({{user.flag}}==-1 && {{user.flashblind}}==0)
-             {
-                    let x=document.getElementById("get_assured");
-                    x.style.display="none";
-             }
+
+            //Disabling get it assured button for flag 3 and 4
+            function checkbutton(){
+                if({{user.flag}}==-1 && {{user.flashblind}}>0)
+                {
+                   $('#get_assured').prop("disabled",true);
+                }
             }
-            checkbutton()
+            checkbutton();
+
+            //Disabling get assured button when spin button is clicked
+            $('input#spin_button').click(function(){
+                $('#get_assured').prop("disabled", true);
+            });
+
             $('input#reattempt').hide();
             $('input#attempt_button').hide();
 
@@ -218,14 +225,6 @@
                     },
                     success: function(data) {
                         let name=data.lifeline;
-                        let useflag=data.useflag;
-                        let flashblind=data.flashblind;
-                        if(useflag==-1 && flashblind==0)
-                            {
-                                $('input#spin_button').click(function(){
-                                $('#get_assured').hide();
-                            });
-                            }
                         if(data.flag==0)
                         {
                             $('input#enable_reattempt').prop("disabled", false);
