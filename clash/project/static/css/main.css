@@ -1,0 +1,41 @@
+body
+{
+    font-family: Arial, Helvetica, sans-serif;
+
+}
+
+/* Sets the background image for the wheel */
+
+.wheel{
+     position: relative;
+}
+#lifeline{
+    margin-left: 200px;
+    margin-right: 200px;
+    padding: 10px;
+}
+#canvas{
+    background-position: center;
+    background-repeat: none;
+    margin-left: 500px;
+    margin-right: 500px;
+    margin-bottom: 20px;
+    padding: 10px;
+    z-index: 1;
+}
+
+#prizePointer {
+    position: absolute;
+    left: 702px;
+    top: 980px;
+}
+
+#spin_button{
+    margin-left: 660px;
+    margin-right: 600px;
+    margin-bottom: 20px;
+    padding: 10px;
+}
+
+
+
