@@ -87,10 +87,13 @@
         <h2>You have no Spins here after</h2>
     {%endifequal%}
 {% else %}
-    <h2>Your checkpoint is {{user.checkpoint}}</h2>
+     <h2>Your checkpoint is {{user.checkpoint}}</h2>
+
 {%endifequal%}
+<h1>Spins Available : {{user.spincount}} </h1>
 {% for msg in msg %}
 <h2>{{msg}}</h2>
+
 {% endfor %}
         <form action="{% url 'getassured'%}" method="post">
             {% csrf_token %}
@@ -172,7 +175,7 @@
             }
 
             function checkpoint(){
-                if(total_score%cp===0 && total_score!=0){
+                if(total_score%cp===0 && total_score!=0  && {{user.flashblind}}<=0) {
                     document.getElementById('spin_button').disabled = false;
                 }
                 if(cp===-1 ){
@@ -180,15 +183,15 @@
                 }
             }
             function Spin_Count(){
-                if(spin_count<0){
+                if(spin_count<=0){
                      document.getElementById('spin_button').disabled = true;
+
                 }
             }
 
             function get_it_assured(){
             document.getElementById("progressbar").style = "width:"+{{user.progress}}+"%";
                 if(percentage>=100 ){
-
                      document.getElementById('get_assured').disabled =false;
                 }
             }
@@ -196,7 +199,7 @@
 
             //Disabling get it assured button for flag 3 and 4
             function checkbutton(){
-                if({{user.flag}}==-1 && {{user.flashblind}}>0)
+                if({{user.flashblind}}>0)
                 {
                    $('#get_assured').prop("disabled",true);
                 }

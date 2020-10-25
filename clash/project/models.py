@@ -50,6 +50,7 @@ class Register(models.Model):  # extended user model
     progress=models.IntegerField(default=0)
     getassured=models.BooleanField(default=False)
     freezebar=models.BooleanField(default=False)
+    allow=models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.first_name+f' ({self.user.username})'

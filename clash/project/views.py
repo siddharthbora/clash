@@ -21,12 +21,14 @@ number_of_questions = 12
 def checkspin(request):
     flag=request.GET.get('flag')
     getuser = Register.objects.get(user=request.user)
-    getuser.spincount-=1
-    getuser.flag = 3
-    flag=3
+    getuser.flag =int(flag)
+    if getuser.spincount<=0:
+        getuser.checkpoint=-1
+    flag=int(flag)
     if int(flag)==2 and getuser.freezetimestart==None:
         getuser.freezetimestart=timezone.now()
     getuser.spin_wheel=True
+    getuser.spincount -= 1
     getuser.save()
     '''life=["congrats u won chance to reattempt a question",
           "Unlucky! -5 from ur total",
@@ -89,7 +91,7 @@ def signup(request):
             newuser.save()
             lst = []
             if newuser.level=='fe':
-                cp=random.randint(5,7)
+                cp=random.randint(1,2)
                 newuser.checkpoint=cp
             elif newuser.level=='se':
                 cp=random.randint(8,10)
@@ -148,6 +150,7 @@ def recfun(getuser):
 def success(request):
     try:
         msg3=""
+
         getuser = Register.objects.get(user=request.user)
         time_diff = timezone.now() - getuser.user.last_login
         minute=getuser.extra_time//60
@@ -190,19 +193,19 @@ def success(request):
                 elif getuser.flag == 3:
                     msg3 = "Unlucky! -8 + 4 for next 3 questions"
                     getuser.marks=3
-                    getuser.flashblind=2
+                    getuser.flashblind=3
                     recfun(getuser)
                 elif getuser.flag == 4:
                     msg3 = "congrats you have no negative marks for next 3 questions"
                     getuser.marks=4
-                    getuser.flashblind=2
+                    getuser.flashblind=3
                     recfun(getuser)
                 elif getuser.flag == 5:
                     msg3 = "Unlucky! u cannot spin here after"
                     getuser.checkpoint=-1
                     recfun(getuser)
                 elif getuser.flag == 6:
-                    msg3 = "congrats you have +16-10 marking scmeme fpr current question"
+                    msg3 = "congrats you have +16-10 marking schmeme for current question"
                     getuser.marks = 5
                     recfun(getuser)
         if getuser.getassured==True:
@@ -217,14 +220,14 @@ def success(request):
                     getuser.marks = 1
             else:
                 if pre_question.correct_answer == user_input2:
-                    score = +2
+                    score = +0
                     getuser.marks = 1
                 else :
-                    score = -14
+                    score = -18
                     getuser.marks = 2
 
 
-            getuser.getassured=False
+
             getuser.progress=0
             respo = Response(question=pre_question, user=getuser.user, selected_answer=user_input1, score=score)
             respo.save()
@@ -235,6 +238,7 @@ def success(request):
 
         if request.method == 'POST' and getuser.flag!=0 and getuser.getassured==False:
             if request.POST.get('submit') == str(lst[-1]):
+                getuser.getassured = False
                 user_input = request.POST['user_ans']
                 pre_question = Questions.objects.get(pk=lst[-1])
                 if getuser.freezetimestart!=None:
@@ -266,32 +270,36 @@ def success(request):
                 elif getuser.marks==3:
                     if pre_question.correct_answer == user_input:
                         score = +4
-                        if getuser.flashblind>0:
+                        if getuser.flashblind>1:
                             getuser.flashblind-=1
                             getuser.marks=3
                         else:
+                            getuser.flashblind=0
                             getuser.marks=1
                     else:
                         score = -8
-                        if getuser.flashblind>0:
+                        if getuser.flashblind>1:
                             getuser.flashblind-=1
                             getuser.marks=3
                         else:
+                            getuser.flashblind = 0
                             getuser.marks = 2
                 elif getuser.marks == 4:
                     if pre_question.correct_answer == user_input:
                         score = +4
-                        if getuser.flashblind>0:
+                        if getuser.flashblind>1:
                             getuser.flashblind-=1
                             getuser.marks=4
                         else:
                             getuser.marks=1
+                            getuser.flashblind=0
                     else:
                         score = 0
-                        if getuser.flashblind>0:
+                        if getuser.flashblind>1:
                             getuser.flashblind-=1
                             getuser.marks=4
                         else:
+                            getuser.flashblind=3
                             getuser.marks = 2
                 elif getuser.marks == 5:
                     if pre_question.correct_answer == user_input:
