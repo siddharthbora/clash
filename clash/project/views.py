@@ -21,10 +21,10 @@ number_of_questions = 12
 def checkspin(request):
     flag=request.GET.get('flag')
     getuser = Register.objects.get(user=request.user)
-    getuser.flag =int(flag)
+    getuser.flag =0
     if getuser.spincount<=0:
         getuser.checkpoint=-1
-    flag=int(flag)
+    flag=0
     if int(flag)==2 and getuser.freezetimestart==None:
         getuser.freezetimestart=timezone.now()
     getuser.spin_wheel=True
@@ -179,7 +179,8 @@ def success(request):
             if allow:
                 if getuser.flag==0 and request.method=='POST':
                     msg3="congrats u won chance to reattempt a question"
-                    quenumber=request.POST['quenum']                #take question number!
+                    quenumber=request.POST['quenum']
+                    print(quenumber)                    #take question number!
                     lst.append(flst[int(quenumber)-1])              #152
                     getuser.marks=6                                 #43
                     recfun(getuser)
@@ -270,6 +271,8 @@ def success(request):
                 elif getuser.marks==3:
                     if pre_question.correct_answer == user_input:
                         score = +4
+                        if getuser.progress < 100 and getuser.freezebar == False:
+                            getuser.progress += 20
                         if getuser.flashblind>1:
                             getuser.flashblind-=1
                             getuser.marks=3
@@ -278,6 +281,8 @@ def success(request):
                             getuser.marks=1
                     else:
                         score = -8
+                        if getuser.progress > 0 and getuser.freezebar == False:
+                            getuser.progress -= 30
                         if getuser.flashblind>1:
                             getuser.flashblind-=1
                             getuser.marks=3
@@ -287,6 +292,8 @@ def success(request):
                 elif getuser.marks == 4:
                     if pre_question.correct_answer == user_input:
                         score = +4
+                        if getuser.progress < 100 and getuser.freezebar == False:
+                            getuser.progress += 20
                         if getuser.flashblind>1:
                             getuser.flashblind-=1
                             getuser.marks=4
@@ -295,6 +302,8 @@ def success(request):
                             getuser.flashblind=0
                     else:
                         score = 0
+                        if getuser.progress > 0 and getuser.freezebar == False:
+                            getuser.progress -= 30
                         if getuser.flashblind>1:
                             getuser.flashblind-=1
                             getuser.marks=4
@@ -304,15 +313,23 @@ def success(request):
                 elif getuser.marks == 5:
                     if pre_question.correct_answer == user_input:
                         score = +16
+                        if getuser.progress < 100 and getuser.freezebar == False:
+                            getuser.progress += 20
                         getuser.marks = 1
                     else:
+                        if getuser.progress>0 and getuser.freezebar==False:
+                            getuser.progress-=30
                         score = -10
                         getuser.marks = 2
                 elif getuser.marks == 6:
                     if pre_question.correct_answer == user_input:
                         score = +5
+                        if getuser.progress < 100 and getuser.freezebar == False:
+                            getuser.progress += 20
                         getuser.marks = 1
                     else:
+                        if getuser.progress>0 and getuser.freezebar==False:
+                            getuser.progress-=30
                         score = -5
                         getuser.marks = 2
 
